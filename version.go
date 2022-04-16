@@ -134,6 +134,7 @@ func (v *Version) bumpReleaseToProd() *Version {
 
 
 func (v *Version) bumpBuild() *Version {
+
 	build, err := strconv.Atoi(v.build)
 	check(err)
 
@@ -148,14 +149,45 @@ func (v *Version) bumpBuild() *Version {
 	return &nv
 }
 
+func (v *Version) bump(part string) *Version {
+	var newVers *Version
+	switch part {
+	case "major":
+		newVers = v.bumpMajor()
+	case "minor":
+		newVers = v.bumpMinor()
+	case "patch":
+		newVers = v.bumpPatch()
+	case "release":
+		newVers = v.bumpRelease()
+	case "prod":
+		newVers = v.bumpReleaseToProd()
+	case "build":
+		newVers = v.bumpBuild()
+	default:
+		newVers = v
+	}
+	return newVers
+}
+
+func (v *Version) equals(other *Version) bool {
+	return v.toString() == other.toString()
+}
+
+func defaultZeroStr(input string) string {
+	if input == "" {
+		return "0"
+	}
+	return input
+}
 
 func NewVersion(match []string) *Version {
 	v := Version{
-		major:   match[0],
-		minor:   match[1],
-		patch:   match[2],
+		major:   defaultZeroStr(match[0]),
+		minor:   defaultZeroStr(match[1]),
+		patch:   defaultZeroStr(match[2]),
 		release: match[3],
-		build:   match[4],
+		build:   defaultZeroStr(match[4]),
 	}
 	return &v
 }

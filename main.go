@@ -114,7 +114,8 @@ func doNext(part string) {
 		//fmt.Printf("version: %s\n", match.version.format("000-a0"))
 		//fmt.Printf("version: %s\n", match.version.format("000+A0"))
 		//fmt.Printf("version: %s\n", match.version.format("000+A.0"))
-		fmt.Printf("%s:%0*d  %s\n", aurora.Yellow(match.file), 3, aurora.Blue(match.line), aurora.BrightWhite(match.version.toString()).Bold())
+		nv := match.version.bump(part)
+		fmt.Printf("%s: %0*d  %s -> %s\n", aurora.Yellow(match.file), 3, aurora.Blue(match.line), aurora.BrightWhite(match.version.toString()).Bold(), aurora.BrightWhite(nv.toString()))
 	}
 
 }
