@@ -1,0 +1,5 @@
+[dover]
+version_format = "000-A.0"
+versioned_files = [
+    "main.go",
+]

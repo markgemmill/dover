@@ -4,45 +4,39 @@ import (
 	"strconv"
 )
 
-const VERSION_REGEX = `version[^ :=]* ?[:=] ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.-](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
-//var VERSION_REGEX *regexp.Regexp
+// TODO: combines these strings
+const JUST_VERSION = `(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?`
+const VERSION_REGEX = `(version|VERSION|Version)[^ :=]* ?[:=] ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
 
 var RELEASE = [4]string{"dev", "alpha", "beta", "rc"}
-var RELEASES = map[string]string{ "dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
-var LONG = map[string]string{ "dev": "dev", "alpha": "alpha", "beta": "beta", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
-var SHORT = map[string]string{ "dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "d", "a": "a", "b": "b"}
-
-
-//func Init() {
-//	VERSION_REGEX, _ = regexp.Compile(VERSION)
-//}
-
+var RELEASES = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
+var LONG = map[string]string{"dev": "dev", "alpha": "alpha", "beta": "beta", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
+var SHORT = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "d", "a": "a", "b": "b"}
+var PARTS = [6]string{"major", "minor", "patch", "release", "prod", "build"}
 
 func parseRegexResults(match []string) []string {
 	return []string{
-		match[1],
-		match[3],
-		match[5],
-		match[7],
-		match[9],
+		match[2],  // major
+		match[4],  // minor
+		match[6],  // patch
+		match[8],  // release
+		match[10], // build
 	}
 }
 
-
 func nextRelease(currentRelease string) string {
-	 index := -1
-	 for i, release := range RELEASE {
-	 	if release == currentRelease {
-	 		index = i
+	index := -1
+	for i, release := range RELEASE {
+		if release == currentRelease {
+			index = i
 		}
-	 }
-	 index += 1
-	 if index + 1 > len(RELEASE) {
-	 	return ""
-	 }
-	 return RELEASE[index]
+	}
+	index += 1
+	if index+1 > len(RELEASE) {
+		return ""
+	}
+	return RELEASE[index]
 }
-
 
 type Version struct {
 	major   string
@@ -52,8 +46,19 @@ type Version struct {
 	build   string
 }
 
+func (v *Version) copy() Version {
+	nv := Version{
+		major:   v.major,
+		minor:   v.minor,
+		patch:   v.patch,
+		release: v.release,
+		build:   v.build,
+	}
+	return nv
+}
+
 func (v *Version) format(fmtString string) string {
-	f:= NewVersionFormater(fmtString)
+	f := NewVersionFormater(fmtString)
 	return f.format(v)
 }
 
@@ -61,112 +66,129 @@ func (v *Version) toString() string {
 	return v.format("000-A.0")
 }
 
-func (v *Version) bumpMajor() *Version {
+func (v *Version) bumpMajor() Version {
 	major, err := strconv.Atoi(v.major)
 	check(err)
 
 	major = major + 1
 	nv := Version{
-		major: strconv.Itoa(major),
-		minor: "0",
-		patch: "0",
+		major:   strconv.Itoa(major),
+		minor:   "0",
+		patch:   "0",
 		release: "",
-		build: "0",
+		build:   "0",
 	}
-	return &nv
+	return nv
 
 }
 
-func (v *Version) bumpMinor() *Version {
+func (v *Version) bumpMinor() Version {
 	minor, err := strconv.Atoi(v.minor)
 	check(err)
 
 	minor = minor + 1
 	nv := Version{
-		major: v.major,
-		minor: strconv.Itoa(minor),
-		patch: "0",
+		major:   v.major,
+		minor:   strconv.Itoa(minor),
+		patch:   "0",
 		release: "",
-		build: "0",
+		build:   "0",
 	}
-	return &nv
+	return nv
 }
 
-func (v *Version) bumpPatch() *Version {
+func (v *Version) bumpPatch() Version {
 	patch, err := strconv.Atoi(v.patch)
 	check(err)
 
 	patch = patch + 1
 	nv := Version{
-		major: v.major,
-		minor: v.minor,
-		patch: strconv.Itoa(patch),
+		major:   v.major,
+		minor:   v.minor,
+		patch:   strconv.Itoa(patch),
 		release: "",
-		build: "0",
+		build:   "0",
 	}
-	return &nv
+	return nv
 }
 
-func (v *Version) bumpRelease() *Version {
+func (v *Version) setPreRelease(release string) Version {
+	nv := v.copy()
+	nv.release = release
+	nv.build = "0"
+	return nv
+}
+
+func (v *Version) bumpRelease() Version {
 	release := nextRelease(v.release)
 
 	nv := Version{
-		major: v.major,
-		minor: v.minor,
-		patch: v.patch,
+		major:   v.major,
+		minor:   v.minor,
+		patch:   v.patch,
 		release: release,
-		build: "0",
+		build:   "0",
 	}
-	return &nv
+	return nv
 
 }
 
-func (v *Version) bumpReleaseToProd() *Version {
+func (v *Version) bumpReleaseToProd() Version {
 	nv := Version{
-		major: v.major,
-		minor: v.minor,
-		patch: v.patch,
+		major:   v.major,
+		minor:   v.minor,
+		patch:   v.patch,
 		release: "",
-		build: "0",
+		build:   "0",
 	}
-	return &nv
+	return nv
 }
 
-
-func (v *Version) bumpBuild() *Version {
+func (v *Version) bumpBuild() Version {
 
 	build, err := strconv.Atoi(v.build)
 	check(err)
 
 	build = build + 1
 	nv := Version{
-		major: v.major,
-		minor: v.minor,
-		patch: v.patch,
+		major:   v.major,
+		minor:   v.minor,
+		patch:   v.patch,
 		release: v.release,
-		build: strconv.Itoa(build),
+		build:   strconv.Itoa(build),
 	}
-	return &nv
+	return nv
 }
 
-func (v *Version) bump(part string) *Version {
-	var newVers *Version
+func (v *Version) bump(part string, preRelease string) Version {
+	newVers := v.copy()
+
 	switch part {
 	case "major":
-		newVers = v.bumpMajor()
+		newVers = newVers.bumpMajor()
 	case "minor":
-		newVers = v.bumpMinor()
+		newVers = newVers.bumpMinor()
 	case "patch":
-		newVers = v.bumpPatch()
-	case "release":
-		newVers = v.bumpRelease()
-	case "prod":
-		newVers = v.bumpReleaseToProd()
-	case "build":
-		newVers = v.bumpBuild()
-	default:
-		newVers = v
+		newVers = newVers.bumpPatch()
 	}
+
+	switch preRelease {
+	case "dev":
+		newVers = newVers.setPreRelease(preRelease)
+	case "alpha":
+		newVers = newVers.setPreRelease(preRelease)
+	case "beta":
+		newVers = newVers.setPreRelease(preRelease)
+	case "rc":
+		newVers = newVers.setPreRelease(preRelease)
+	case "release":
+		newVers = newVers.bumpReleaseToProd()
+	}
+
+	if newVers.release != "" && part == "build" {
+		newVers = newVers.bumpBuild()
+	}
+
 	return newVers
 }
 

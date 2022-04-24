@@ -15,38 +15,37 @@ func assertVersion(t *testing.T, v *Version, major string, minor string, patch s
 
 func TestNewVersion(t *testing.T) {
 	v := NewVersion([]string{"0", "1", "2", "", ""})
-	assertVersion(t, v, "0", "1", "2", "", "")
-
+	assertVersion(t, v, "0", "1", "2", "", "0")
 }
 
 func TestVersionBumpMajor(t *testing.T) {
 	v := NewVersion([]string{"0", "1", "2", "", ""})
 	v2 := v.bumpMajor()
-	assertVersion(t, v2, "1", "0", "0", "", "0")
+	assertVersion(t, &v2, "1", "0", "0", "", "0")
 }
 
 func TestVersionBumpMinor(t *testing.T) {
 	v := NewVersion([]string{"0", "1", "2", "", ""})
 	v2 := v.bumpMinor()
-	assertVersion(t, v2, "0", "2", "0", "", "0")
+	assertVersion(t, &v2, "0", "2", "0", "", "0")
 }
 
 func TestVersionBumpPatch(t *testing.T) {
 	v := NewVersion([]string{"0", "1", "2", "", ""})
 	v2 := v.bumpPatch()
-	assertVersion(t, v2, "0", "1", "3", "", "0")
+	assertVersion(t, &v2, "0", "1", "3", "", "0")
 }
 
 func TestVersionBumpReleaseToProd(t *testing.T) {
 	v := NewVersion([]string{"0", "1", "2", "alpha", "1"})
 	v2 := v.bumpReleaseToProd()
-	assertVersion(t, v2, "0", "1", "2", "", "0")
+	assertVersion(t, &v2, "0", "1", "2", "", "0")
 }
 
 func TestVersionBumpRelease(t *testing.T) {
 	var tests = []struct {
 		release, expected string
-	} {
+	}{
 		{"", "dev"},
 		{"dev", "alpha"},
 		{"alpha", "beta"},
@@ -59,7 +58,7 @@ func TestVersionBumpRelease(t *testing.T) {
 		t.Run(testname, func(t *testing.T) {
 			v := NewVersion([]string{"0", "1", "2", tt.release, ""})
 			v2 := v.bumpRelease()
-			assertVersion(t, v2, "0", "1", "2", tt.expected, "0")
+			assertVersion(t, &v2, "0", "1", "2", tt.expected, "0")
 		})
 	}
 }
