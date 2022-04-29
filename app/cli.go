@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -10,59 +10,7 @@ import (
 	"strings"
 )
 
-func setMax(currentValue int, maxValue *int) {
-	if currentValue > *maxValue {
-		*maxValue = currentValue
-	}
-}
-
-func maxLength(items []string) int {
-	var maxLen int = 0
-	for _, item := range items {
-		itemLen := len(item)
-		if itemLen > maxLen {
-			maxLen = itemLen
-		}
-	}
-	return maxLen
-}
-
-func keys(mapping map[string]string) []string {
-	var list = []string{}
-	for k, _ := range mapping {
-		list = append(list, k)
-	}
-	return list
-}
-
-func digitCount(number int) int {
-	if number < 10 {
-		return 1
-	}
-	if number < 100 {
-		return 2
-	}
-	if number < 1000 {
-		return 3
-	}
-	if number < 10000 {
-		return 4
-	}
-	return 5
-}
-
-func getMaxColumnWidths(matches *[]*VersionMatch, format string) (int, int, int) {
-	var fileWidth int = 0
-	var lineWidth int = 0
-	var versionWidth int = 0
-	for _, m := range *matches {
-		setMax(len(m.file), &fileWidth)
-		setMax(digitCount(m.line), &lineWidth)
-		setMax(len(m.version.format(format)), &versionWidth)
-	}
-
-	return fileWidth, lineWidth, versionWidth
-}
+const VERSION = "0.1.1-alpha.2"
 
 func printVersionChanges(matches *[]*VersionMatch, part string, release string, format string, updated bool) {
 	var fileW, lineW, versW int
@@ -79,53 +27,11 @@ func printVersionChanges(matches *[]*VersionMatch, part string, release string, 
 	}
 }
 
-func printInconsistentVersions(matches *[]*VersionMatch, format string) {
-	var fileW, lineW, versW int
-	fileW, lineW, versW = getMaxColumnWidths(matches, format)
-
-	for _, match := range *matches {
-		fmt.Printf("%-0*s: %0*d  %-0*s\n", fileW, a.Yellow(match.file), lineW, a.Blue(match.line), versW, a.BrightWhite(match.version.format(format)).Bold())
-	}
-}
-
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {
 		return args.format
 	}
 	return cfg.format
-}
-
-func doVersion(args ExecutionArgs, matches *[]*VersionMatch) {
-	if !assertVersionMatchConsistency(matches) {
-		fmt.Print(a.BrightMagenta("\nVersions do not match across all files.\n"))
-		printInconsistentVersions(matches, args.format)
-	} else {
-		fmt.Println((*matches)[0].version.format(args.format))
-	}
-}
-
-func doNext(args ExecutionArgs, matches *[]*VersionMatch) {
-	if !assertVersionMatchConsistency(matches) {
-		fmt.Print(a.BrightMagenta("Versions do not match across all files.\n"))
-		printInconsistentVersions(matches, args.format)
-	} else {
-		printVersionChanges(matches, args.part, args.preRelease, args.format, false)
-	}
-}
-
-func doBump(args ExecutionArgs, matches *[]*VersionMatch) {
-	if !assertVersionMatchConsistency(matches) {
-		fmt.Print(a.BrightMagenta("No files have been changed!\n"))
-		fmt.Print(a.BrightMagenta("Versions do not match across all files.\n"))
-		printInconsistentVersions(matches, args.format)
-	} else {
-		for _, match := range *matches {
-			newVers := match.version.bump(args.part, args.preRelease)
-			version := newVers.format(args.format)
-			writeVersionUpdate(match.file, match.line, version)
-		}
-		printVersionChanges(matches, args.part, args.preRelease, args.format, true)
-	}
 }
 
 func filterFlags(args map[string]any, flags []string) string {

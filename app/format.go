@@ -1,6 +1,8 @@
-package main
+package app
 
-import "os"
+import (
+	"os"
+)
 import "regexp"
 import "fmt"
 import "strings"

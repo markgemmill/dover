@@ -2,19 +2,20 @@
 
 version: '3'
 
-vars:
-  GREETING: Hello, World!
-
 tasks:
   test:
     cmds:
       - go test
   clean:
     cmds:
-      - rm -f ./bin/dover
-  build:dev:
+      - rm -f ./bin/dover-mac
+      - rm -f ./bin/dover.exe
+  build:dev:-mac
     cmds:
       - task: clean
-      - go build -o bin/dover
+      - go build -o bin/dover-mac
+      - GOOS=windows go build -o bin/dover.exe
   build:release:
-    - go build -o release/dover
+    cmds:
+      - go build -o bin/dover
+      - GOOS=windows go build -o bin/dover.exe

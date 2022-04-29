@@ -191,11 +191,11 @@ The output format can be controlled with the --format option with these options:
     000[(.|-|+)](a|A)[(.|-)]0
 
 | Segment             | Format Value | Note                                                                                              |
-|---------------------|--------------|---------------------------------------------------------------------------------------------------| 
-| Major.Minor.Patch	  | 000	         | Required.                                                                                         | 
-| Separator	          | . - +        | Optional. Dash, dot or plus.                                                                      |
+|---------------------|--------------|---------------------------------------------------------------------------------------------------|
+| Major.Minor.Patch	  | 000	         | Required.                                                                                      |
+| Separator	          | . - +        | Optional. Dash, dot or plus.                                                                   |
 | Pre-Release         | a *or* A     | Optional. Defaults to A.<br/>a = short name: d, a, b, rc <br/>A = long name: dev, alpha, beta, rc |
-| Separator	          | . -	         | Optional. Dash or dot.                                                                            |
+| Separator	          | . -	         | Optional. Dash or dot.                                                                         |
 | Pre-Release Version | 0            | Version will always display if there is a pre-release.                                            |
 
 
@@ -219,7 +219,7 @@ Format examples:
 
 If at any point the version numbers between multiple files being tracked are miss-aligned, dover will raise an error:
 
-    ... dover -i -M
-    setup.py      0.1.0  (__version__ = '0.1.0')
-    setup.cfg     0.3.0  (version = 0.3.0)
-    dover/cli.py  0.1.0  (__version__ = '0.1.0')
+    ... dover -iB
+    Versions do not match across all files.
+    package.json: 2  0.1.1-alpha.0
+    main.go     : 2  0.1.1-alpha.2
