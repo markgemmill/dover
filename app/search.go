@@ -1,40 +1,9 @@
 package app
 
 import (
-	"errors"
-	"fmt"
 	"os"
-	"regexp"
 	"strings"
 )
-
-func configValues() (ConfigValues, error) {
-
-	possibleConfigFiles := map[string]configParser{
-		".dover":         getTomlConfigValues,
-		"pyproject.toml": getTomlConfigValues,
-		"package.json":   getJSONConfigValues,
-	}
-
-	var cfg ConfigValues
-
-	for fileName, configParser := range possibleConfigFiles {
-		cfgFile, err := findConfigFile(fileName)
-		if err != nil {
-			continue
-		}
-
-		cfg, err := configParser(cfgFile)
-		if err != nil {
-			fmt.Printf("%s: %s", fileName, err)
-			continue
-		}
-		return cfg, nil
-	}
-
-	return cfg, errors.New("Unable to find dover configuration.")
-
-}
 
 type VersionMatch struct {
 	file    string
@@ -59,12 +28,11 @@ func readVersionSourceFile(filePath string) []string {
 
 func searchForVersionString(file string, fileContent []string) []*VersionMatch {
 	lineMatches := make([]*VersionMatch, 0)
-	rx, _ := regexp.Compile(VERSION_REGEX)
+	finder := NewVersionFinder()
 	for index, line := range fileContent {
-		match := rx.FindStringSubmatch(line)
-		if match != nil {
-			v := NewVersion(parseRegexResults(match))
-			vm := newVersionMatch(file, index, v)
+		v, found := finder.Find(line)
+		if found {
+			vm := newVersionMatch(file, index, &v)
 			lineMatches = append(lineMatches, vm)
 		}
 	}

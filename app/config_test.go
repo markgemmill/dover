@@ -1,7 +1,12 @@
 package app
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -88,4 +93,108 @@ func TestJSONConfigWithNoFileVar(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "", cfg.format)
 	assert.Equal(t, 0, len(cfg.files))
+}
+
+type ConfigTestSuite struct {
+	suite.Suite
+	homeDir string
+	tempDir string
+}
+
+func (suite *ConfigTestSuite) writeFile(name, content string) {
+	file := filepath.Join(suite.tempDir, name)
+	os.WriteFile(file, []byte(content), 0666)
+}
+
+func (suite *ConfigTestSuite) SetupTest() {
+	suite.homeDir, _ = os.Getwd()
+	suite.tempDir, _ = ioutil.TempDir("", "gotest-*")
+	suite.writeFile("coding.go", `\nVERSION = "0.1.0-a0"\n`)
+	suite.writeFile("overhill.go", `\n__version__ = "0.1.0-a0"\n`)
+	os.Chdir(suite.tempDir)
+}
+
+func (suite *ConfigTestSuite) TeardownTest() {
+	os.Chdir(suite.homeDir)
+	os.RemoveAll(suite.tempDir)
+}
+
+func (suite *ConfigTestSuite) TestNoConfigFiles() {
+
+	_, err := configValues()
+	suite.NotNil(err)
+	suite.Equal("Unable to find dover configuration.", fmt.Sprint(err))
+}
+
+func (suite *ConfigTestSuite) TestInvalidDoverConfigFile() {
+	suite.writeFile(".dover", `[dover]`)
+
+	_, err := configValues()
+	suite.NotNil(err)
+	suite.Equal("`.dover` config has no versioned_files.", fmt.Sprint(err))
+}
+
+func (suite *ConfigTestSuite) TestConfigWithInvalidVersionedFile() {
+	suite.writeFile(".dover", `[dover]
+versioned_files = [
+	"dunnowherethisis.go",
+	"overhill.go"
+]
+`)
+
+	_, err := configValues()
+	suite.NotNil(err)
+	suite.Equal("No such file: dunnowherethisis.go", fmt.Sprint(err))
+}
+
+func (suite *ConfigTestSuite) TestValidDoverConfigFile() {
+	suite.writeFile(".dover", `[dover]
+versioned_files = [
+	"coding.go",
+	"overhill.go"
+]
+`)
+
+	cfg, err := configValues()
+	suite.Nil(err)
+	suite.Equal("000.A.0", cfg.format)
+	suite.Equal(2, len(cfg.files))
+}
+
+func (suite *ConfigTestSuite) TestValidPyProjectConfigFile() {
+	// test the default format code...
+	suite.writeFile("pyproject.toml", `[tool.dover]
+versioned_files = [
+	"coding.go",
+	"overhill.go"
+]
+`)
+
+	cfg, err := configValues()
+	suite.Nil(err)
+	suite.Equal("000.A.0", cfg.format)
+	suite.Equal(2, len(cfg.files))
+}
+
+func (suite *ConfigTestSuite) TestValidPackageJsonConfigFile() {
+	suite.writeFile("package.json", `{
+	"name": "project",
+	"version": "0.1.0.beta.0",
+	"dover": {
+		"version_format": "000+a0",
+		"versioned_files": [
+			"coding.go",
+			"overhill.go"
+		]
+	}
+}`)
+
+	cfg, err := configValues()
+	suite.Nil(err)
+	suite.Equal("000+a0", cfg.format)
+	suite.Equal(2, len(cfg.files))
+}
+
+func TestRunConfigTestSuite(t *testing.T) {
+	suite.Run(t, new(ConfigTestSuite))
 }

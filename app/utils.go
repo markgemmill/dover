@@ -1,8 +1,19 @@
 package app
 
+import "fmt"
+import "os"
+import c "github.com/fatih/color"
+
 func check(e any) {
 	if e != nil {
 		panic(e)
+	}
+}
+
+func ExitOnError(e error) {
+	if e != nil {
+		fmt.Printf("%s\n", c.RedString(fmt.Sprintf("%s", e)))
+		os.Exit(1)
 	}
 }
 
@@ -31,6 +42,14 @@ func keys(mapping map[string]string) []string {
 	return list
 }
 
+//func Keys[K string V any](mapping map[K]V) []K {
+//	var list = []K{}
+//	for k, _ := range mapping {
+//		list = append(list, k)
+//	}
+//	return list
+//}
+
 func digitCount(number int) int {
 	if number < 10 {
 		return 1
@@ -58,4 +77,22 @@ func getMaxColumnWidths(matches *[]*VersionMatch, format string) (int, int, int)
 	}
 
 	return fileWidth, lineWidth, versionWidth
+}
+
+func IndexOf[T string | int](list *[]T, value T) int {
+	index := -1
+	for i, listValue := range *list {
+		if listValue == value {
+			index = i
+		}
+	}
+	return index
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

@@ -5,12 +5,16 @@ version: '3'
 tasks:
   test:
     cmds:
-      - go test
+      - go test ./app
+  test:cov:
+    cmds:
+      - go test -coverprofile=coverage.out ./app
+      - go tool cover -html=coverage.out
   clean:
     cmds:
       - rm -f ./bin/dover-mac
       - rm -f ./bin/dover.exe
-  build:dev:-mac
+  build:dev:
     cmds:
       - task: clean
       - go build -o bin/dover-mac

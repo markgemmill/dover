@@ -1,6 +1,9 @@
 package app
 
 import (
+	"errors"
+	"fmt"
+	"regexp"
 	"strconv"
 )
 
@@ -8,13 +11,17 @@ import (
 const JUST_VERSION = `(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?`
 const VERSION_REGEX = `(version|VERSION|Version)[^ :=]* ?[:=] ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
 
-var RELEASE = [4]string{"dev", "alpha", "beta", "rc"}
+var RELEASE = []string{"dev", "alpha", "beta", "rc"}
 var RELEASES = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
-var LONG = map[string]string{"dev": "dev", "alpha": "alpha", "beta": "beta", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
 var SHORT = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "d", "a": "a", "b": "b"}
+var LONG = map[string]string{"dev": "dev", "alpha": "alpha", "beta": "beta", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
 var PARTS = [6]string{"major", "minor", "patch", "release", "prod", "build"}
 
-func parseRegexResults(match []string) []string {
+type VersionFinder struct {
+	rx regexp.Regexp
+}
+
+func (vf *VersionFinder) parseRegexResults(match []string) []string {
 	return []string{
 		match[2],  // major
 		match[4],  // minor
@@ -24,18 +31,51 @@ func parseRegexResults(match []string) []string {
 	}
 }
 
-func nextRelease(currentRelease string) string {
-	index := -1
-	for i, release := range RELEASE {
-		if release == currentRelease {
-			index = i
-		}
+func (vf *VersionFinder) Find(line string) (Version, bool) {
+	match := vf.rx.FindStringSubmatch(line)
+	if match != nil {
+		return *NewVersion(vf.parseRegexResults(match)), true
 	}
+	return Version{
+		major:   "",
+		minor:   "",
+		patch:   "",
+		release: "",
+		build:   "",
+	}, false
+}
+
+func NewVersionFinder() *VersionFinder {
+	_rx, _ := regexp.Compile(VERSION_REGEX)
+	vf := VersionFinder{
+		rx: *_rx,
+	}
+	return &vf
+}
+
+func nextRelease(currentRelease string) string {
+	//index := -1
+	//for i, release := range RELEASE {
+	//	if release == currentRelease {
+	//		index = i
+	//	}
+	//}
+	index := IndexOf[string](&RELEASE, currentRelease)
 	index += 1
 	if index+1 > len(RELEASE) {
 		return ""
 	}
 	return RELEASE[index]
+}
+
+func validateReleaseOrder(currentRelease string, requestedRelease string) error {
+	currentIndex := IndexOf[string](&RELEASE, currentRelease)
+	requestedIndex := IndexOf[string](&RELEASE, requestedRelease)
+	if requestedIndex < currentIndex {
+		msg := fmt.Sprintf("Invalid release order requested. `%s` comes before the current release `%s`.", requestedRelease, currentRelease)
+		return errors.New(msg)
+	}
+	return nil
 }
 
 type Version struct {
@@ -113,9 +153,14 @@ func (v *Version) bumpPatch() Version {
 }
 
 func (v *Version) setPreRelease(release string) Version {
+	err := validateReleaseOrder(v.release, release)
+	ExitOnError(err)
+
 	nv := v.copy()
-	nv.release = release
-	nv.build = "0"
+	if nv.release != release {
+		nv.release = release
+		nv.build = "0"
+	}
 	return nv
 }
 
@@ -145,7 +190,6 @@ func (v *Version) bumpReleaseToProd() Version {
 }
 
 func (v *Version) bumpBuild() Version {
-
 	build, err := strconv.Atoi(v.build)
 	check(err)
 
@@ -185,7 +229,7 @@ func (v *Version) bump(part string, preRelease string) Version {
 		newVers = newVers.bumpReleaseToProd()
 	}
 
-	if newVers.release != "" && part == "build" {
+	if newVers.release != "" && (part == "build" || v.release == preRelease) {
 		newVers = newVers.bumpBuild()
 	}
 

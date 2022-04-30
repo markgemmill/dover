@@ -4,28 +4,12 @@ import (
 	"fmt"
 	"github.com/elliotchance/orderedmap/v2"
 	c "github.com/fatih/color"
-	a "github.com/logrusorgru/aurora"
 	"github.com/marco-m/docopt-go"
 	"os"
 	"strings"
 )
 
-const VERSION = "0.1.1-alpha.2"
-
-func printVersionChanges(matches *[]*VersionMatch, part string, release string, format string, updated bool) {
-	var fileW, lineW, versW int
-	fileW, lineW, versW = getMaxColumnWidths(matches, format)
-
-	_update := ""
-	if updated == true {
-		_update = "updated "
-	}
-
-	for _, match := range *matches {
-		nv := match.version.bump(part, release)
-		fmt.Printf("%-0*s: %0*d %s%-0*s -> %s\n", fileW, a.Yellow(match.file), lineW, a.Blue(match.line), _update, versW, a.BrightWhite(match.version.format(format)).Bold(), a.BrightWhite(nv.format(format)))
-	}
-}
+const VERSION = "0.1.1+beta.5"
 
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {
@@ -57,6 +41,7 @@ func filterFlags(args map[string]any, flags []string) string {
 type ExecutionArgs struct {
 	increment  bool
 	format     string
+	verbose    bool
 	part       string
 	preRelease string
 }
@@ -175,7 +160,7 @@ func NewUsageBuilder() *Usage {
 		options:     orderedmap.NewOrderedMap[string, string](),
 	}
 	usageBuilder.addUsage("", []string{
-		"[--increment] [--format=<fmt>] ",
+		"[--increment] [--format=<fmt>] [--verbose]",
 		"[--major | --minor | --patch | --build] ",
 		"[--dev | --alpha | --beta | --rc | --release]",
 	})
@@ -184,19 +169,21 @@ func NewUsageBuilder() *Usage {
 	usageBuilder.addOption("-M --major", "Update major version segment.")
 	usageBuilder.addOption("-m --minor", "Update minor version segment.")
 	usageBuilder.addOption("-p --patch", "Update patch version segment.")
-	usageBuilder.addOption("-d --dev", "Update dev version segment.")
-	usageBuilder.addOption("-a --alpha", "Update alpha pre-release segment.")
-	usageBuilder.addOption("-b --beta", "Update beta pre-release segment.")
-	usageBuilder.addOption("-r --rc", "Update release candidate segment.")
+	usageBuilder.addOption("-P --pre-release", "Update to next pre-release.")
+	usageBuilder.addOption("-d --dev", "Update dev version segment or bump dev build.")
+	usageBuilder.addOption("-a --alpha", "Update alpha pre-release segment or bump alpha build.")
+	usageBuilder.addOption("-b --beta", "Update beta pre-release segment or bump beta build.")
+	usageBuilder.addOption("-r --rc", "Update release candidate segment or bump rc build.")
 	usageBuilder.addOption("-B --build", "Update the pre-release build number.")
 	usageBuilder.addOption("-R --release", "Clear pre-release version.")
-	usageBuilder.addOption("-h --help", "Display this help message")
+	usageBuilder.addOption("-v --verbose", "Display details when incrementing.")
+	usageBuilder.addOption("-h --help", "Display this help message.")
 	usageBuilder.addOption("--version", "Display dover version.")
 
 	return &usageBuilder
 }
 
-func ParseCommandline() ExecutionArgs {
+func ParseCommandline() docopt.Opts {
 	var version = fmt.Sprintf("dover v%s", VERSION)
 	usage := NewUsageBuilder()
 
@@ -232,44 +219,48 @@ func ParseCommandline() ExecutionArgs {
 	}
 
 	arguments, _ := CLIParser.ParseArgs(usage.HelpText(false), nil, version)
+	return arguments
 
-	increment, _ := arguments.Bool("--increment")
-	format, _ := arguments.String("--format")
+}
+
+func compileArguments(opts docopt.Opts) ExecutionArgs {
+	increment, _ := opts.Bool("--increment")
+	format, _ := opts.String("--format")
+	verbose, _ := opts.Bool("--verbose")
 
 	args := ExecutionArgs{
 		increment:  increment,
 		format:     format,
-		part:       filterFlags(arguments, []string{"major", "minor", "patch", "build"}),
-		preRelease: filterFlags(arguments, []string{"dev", "alpha", "beta", "rc", "release"}),
+		verbose:    verbose,
+		part:       filterFlags(opts, []string{"major", "minor", "patch", "build"}),
+		preRelease: filterFlags(opts, []string{"dev", "alpha", "beta", "rc", "release"}),
 	}
-
 	return args
 }
 
 func Execute() {
-	args := ParseCommandline()
+	args := compileArguments(ParseCommandline())
+
+	c.NoColor = false
 
 	cfg, err := configValues()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	ExitOnError(err)
 
 	args.format = selectFormat(args, cfg)
 	allMatches := getAllVersionStringMatches(cfg.files)
 
 	if !args.increment && args.part == "" && args.preRelease == "" {
-		doVersion(args, allMatches)
+		displayCurrentVersion(args, allMatches)
 		return
 	}
 
 	if !args.increment && (args.part != "" || args.preRelease != "") {
-		doNext(args, allMatches)
+		displayNextVersion(args, allMatches)
 		return
 	}
 
 	if args.increment && (args.part != "" || args.preRelease != "") {
-		doBump(args, allMatches)
+		applyNextVersion(args, allMatches)
 		return
 	}
 

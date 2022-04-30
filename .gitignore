@@ -3,3 +3,4 @@ package.json
 .idea
 .DS_Store
 dover
+coverage.out
