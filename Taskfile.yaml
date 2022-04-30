@@ -2,24 +2,60 @@
 
 version: '3'
 
+vars:
+  VERSION:
+    sh: dover -f 000a0
+  ZIP_FILE: dover-{{.VERSION}}-win.zip
+  TAR_FILE: dover-{{.VERSION}}-mac.tar.gz
+
 tasks:
   test:
+    desc: Run go test on project.
     cmds:
       - go test ./app
   test:cov:
+    desc: Run go test with coverage.
     cmds:
       - go test -coverprofile=coverage.out ./app
       - go tool cover -html=coverage.out
   clean:
+    desc: Delete contents of ./bin directory.
     cmds:
-      - rm -f ./bin/dover-mac
-      - rm -f ./bin/dover.exe
+      - rm -f ./bin/*
   build:dev:
+    desc: Increments build number and build mac and win binaries.
     cmds:
       - task: clean
-      - go build -o bin/dover-mac
-      - GOOS=windows go build -o bin/dover.exe
-  build:release:
-    cmds:
+      - dover -Bi
       - go build -o bin/dover
       - GOOS=windows go build -o bin/dover.exe
+      -
+  build:prod:
+    desc: Builds mac and win binaries.
+    cmds:
+      - task: clean
+      - go build -o bin/dover
+      - GOOS=windows go build -o bin/dover.exe
+  build:zip:
+    desc:  Zip mac and win binaries.
+    dir: bin
+    cmds:
+      - tar -zcvf {{.TAR_FILE}} dover
+      - zip -r {{.ZIP_FILE}} dover.exe
+  build:dist:
+    desc:  Copy mac and win zipped binaries to dist folder.
+    cmds:
+      - mkdir -p dist
+      - mv bin/{{.ZIP_FILE}} dist
+      - mv bin/{{.TAR_FILE}} dist
+  build:release:
+    desc: Run build:prod, zip and dist commands.
+    cmds:
+      - task: build:prod
+      - task: build:zip
+      - task: build:dist
+  install:
+    desc: Install current mac binary to ~/.local/bin
+    cmds:
+      - rm ~/.local/bin/dover
+      - cp bin/dover ~/.local/bin

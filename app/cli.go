@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const VERSION = "0.1.1+beta.5"
+const VERSION = "0.2.0-rc.1"
 
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {
@@ -39,6 +39,7 @@ func filterFlags(args map[string]any, flags []string) string {
 }
 
 type ExecutionArgs struct {
+	initialize bool
 	increment  bool
 	format     string
 	verbose    bool
@@ -68,6 +69,18 @@ func (u *Usage) addOption(optFlag string, optText string) {
 	u.options.Set(optFlag, optText)
 }
 
+func (u *Usage) writeAppPrefix(b *strings.Builder, writer *ColorizedWriter, first bool) {
+	prefix := u.name
+	if !first {
+		prefix = fmt.Sprintf("%-0*s", len(u.name), " ")
+	}
+	writer.tool.Fprintf(b, "  %s", prefix)
+}
+
+func (u *Usage) writeCommandUsage(b *strings.Builder, writer *ColorizedWriter, cmdWidth int, cmd string, use string) {
+	fmt.Fprintf(b, " %-0*s%s\n", cmdWidth, cmd, use)
+}
+
 func (u *Usage) buildUsage(b *strings.Builder, writer *ColorizedWriter) {
 	writer.header.Fprint(b, "Usage:\n")
 
@@ -79,13 +92,14 @@ func (u *Usage) buildUsage(b *strings.Builder, writer *ColorizedWriter) {
 
 	for _, cmd := range u.usage.Keys() {
 		usageList, _ := u.usage.Get(cmd)
-		for index, use := range usageList {
-			prefix := u.name
-			if index != 0 {
-				prefix = fmt.Sprintf("%-0*s", len(u.name), " ")
+		if len(usageList) > 0 {
+			for index, use := range usageList {
+				u.writeAppPrefix(b, writer, index == 0)
+				u.writeCommandUsage(b, writer, len(cmd), cmd, use)
 			}
-			writer.tool.Fprintf(b, "  %s", prefix)
-			fmt.Fprintf(b, " %-0*s%s\n", cmdWidth, cmd, use)
+		} else {
+			u.writeAppPrefix(b, writer, true)
+			u.writeCommandUsage(b, writer, len(cmd), cmd, "")
 		}
 	}
 
@@ -164,8 +178,10 @@ func NewUsageBuilder() *Usage {
 		"[--major | --minor | --patch | --build] ",
 		"[--dev | --alpha | --beta | --rc | --release]",
 	})
+	usageBuilder.addUsage("init", []string{})
+
 	usageBuilder.addOption("-i --increment", "Apply the increment.")
-	usageBuilder.addOption("-f --format=<fmt>", "Apply format string.")
+	usageBuilder.addOption("-f --format=<fmt>", "Apply format string: 000[-.+][(aA)[-.]0]")
 	usageBuilder.addOption("-M --major", "Update major version segment.")
 	usageBuilder.addOption("-m --minor", "Update minor version segment.")
 	usageBuilder.addOption("-p --patch", "Update patch version segment.")
@@ -224,11 +240,13 @@ func ParseCommandline() docopt.Opts {
 }
 
 func compileArguments(opts docopt.Opts) ExecutionArgs {
+	initialize, _ := opts.Bool("init")
 	increment, _ := opts.Bool("--increment")
 	format, _ := opts.String("--format")
 	verbose, _ := opts.Bool("--verbose")
 
 	args := ExecutionArgs{
+		initialize: initialize,
 		increment:  increment,
 		format:     format,
 		verbose:    verbose,
@@ -248,6 +266,11 @@ func Execute() {
 
 	args.format = selectFormat(args, cfg)
 	allMatches := getAllVersionStringMatches(cfg.files)
+
+	if args.initialize == true {
+		initialize(args)
+		return
+	}
 
 	if !args.increment && args.part == "" && args.preRelease == "" {
 		displayCurrentVersion(args, allMatches)

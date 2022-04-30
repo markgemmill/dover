@@ -94,3 +94,14 @@ func applyNextVersion(args ExecutionArgs, matches *[]*VersionMatch) {
 		fmt.Println(newVers.format(args.format))
 	}
 }
+
+func initialize(args ExecutionArgs) {
+	if fileExists(DOVER_CONFIG_FILE) {
+		fmt.Println(aurora.BrightMagenta("Dover configuration file `.dover` already exists!"))
+		return
+	}
+
+	os.WriteFile(DOVER_CONFIG_FILE, []byte(DOVER_DEFAULT_CONFIG), 0666)
+	fmt.Println(aurora.BrightGreen("Default `.dover` configuration file created."))
+	fmt.Println("*** Be sure to add your project's versioned files! ***")
+}

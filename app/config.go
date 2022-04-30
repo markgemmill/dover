@@ -131,6 +131,12 @@ const DOVER_CONFIG_FILE = ".dover"
 const PYPROJECT_CONFIG_FILE = "pyproject.toml"
 const PACKAGE_JSON_CONFIG_FILE = "package.json"
 
+const DOVER_DEFAULT_CONFIG = `[dover]
+version_format = "000-A.0"
+versioned_files = [
+]
+`
+
 func configValues() (ConfigValues, error) {
 
 	configOrder := []string{DOVER_CONFIG_FILE, PYPROJECT_CONFIG_FILE, PACKAGE_JSON_CONFIG_FILE}
