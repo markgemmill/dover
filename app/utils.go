@@ -1,6 +1,9 @@
 package app
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 import "os"
 import c "github.com/fatih/color"
 
@@ -95,4 +98,12 @@ func fileExists(filename string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+func splitFileAndLineNotation(filePath string) (string, string) {
+	parts := strings.Split(filePath, ":")
+	if len(parts) == 1 {
+		return filePath, ""
+	}
+	return parts[0], parts[1]
 }

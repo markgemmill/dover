@@ -9,7 +9,7 @@ import (
 
 // TODO: combines these strings
 const JUST_VERSION = `(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?`
-const VERSION_REGEX = `(version|VERSION|Version)[^ :=]* ?[:=] ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
+const VERSION_REGEX = `(version|VERSION|Version)[^ :=]* ?[:=]? ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
 
 var RELEASE = []string{"dev", "alpha", "beta", "rc"}
 var RELEASES = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}

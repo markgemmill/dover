@@ -1,7 +1,9 @@
 package app
 
 import (
+	"errors"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -26,10 +28,13 @@ func readVersionSourceFile(filePath string) []string {
 	return strings.Split(string(content), "\n")
 }
 
-func searchForVersionString(file string, fileContent []string) []*VersionMatch {
+func searchForVersionString(file string, lines []int, fileContent []string) []*VersionMatch {
 	lineMatches := make([]*VersionMatch, 0)
 	finder := NewVersionFinder()
 	for index, line := range fileContent {
+		if len(lines) > 0 && IndexOf[int](&lines, index) == -1 {
+			continue
+		}
 		v, found := finder.Find(line)
 		if found {
 			vm := newVersionMatch(file, index, &v)
@@ -39,12 +44,29 @@ func searchForVersionString(file string, fileContent []string) []*VersionMatch {
 	return lineMatches
 }
 
+func parseVersionedFileConfig(filePath string) (string, []int) {
+	lines := make([]int, 0)
+	filePath, lineNotation := splitFileAndLineNotation(filePath)
+	if lineNotation == "" {
+		return filePath, lines
+	}
+	for _, value := range strings.Split(lineNotation, ",") {
+		lineInt, err := strconv.Atoi(value)
+		if err != nil {
+			ExitOnError(errors.New("Invalid versioned file:line notation in configuration file."))
+		}
+		lines = append(lines, lineInt)
+	}
+	return filePath, lines
+}
+
 func getAllVersionStringMatches(files []string) *[]*VersionMatch {
 
 	allMatches := make([]*VersionMatch, 0)
 	for _, file := range files {
-		content := readVersionSourceFile(file)
-		for _, match := range searchForVersionString(file, content) {
+		filePath, lines := parseVersionedFileConfig(file)
+		content := readVersionSourceFile(filePath)
+		for _, match := range searchForVersionString(filePath, lines, content) {
 			allMatches = append(allMatches, match)
 		}
 	}

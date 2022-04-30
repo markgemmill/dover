@@ -169,6 +169,7 @@ func configValues() (ConfigValues, error) {
 		}
 
 		for _, filePath := range cfg.files {
+			filePath, _ := splitFileAndLineNotation(filePath)
 			if !fileExists(filePath) {
 				return cfg, errors.New(fmt.Sprintf("No such file: %s", filePath))
 			}
