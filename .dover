@@ -2,6 +2,6 @@
 version_format = "000-A.0"
 versioned_files = [
     "app/cli.go",
-    "README.md:2",
+    "README.md:4",
     "package.json"
 ]

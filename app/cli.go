@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const VERSION = "0.2.1-dev.2"
+const VERSION = "0.2.1-dev.3"
 
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {
@@ -208,7 +208,7 @@ func ParseCommandline() docopt.Opts {
 			// if --help
 			output = usage.HelpText(true)
 		} else if outputUsage == true && outputOptions == false {
-			// if invalid arguemnts
+			// if invalid arguments
 			output = usage.UsageText(true)
 		}
 		// else --version - use default output

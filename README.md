@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/markgemmill/dover)](https://goreportcard.com/report/github.com/markgemmill/dover)
 
-*version 0.2.1-dev.1*
+*version 0.2.1-dev.3*
 
 A commandline utility for incrementing your project version numbers.
 
