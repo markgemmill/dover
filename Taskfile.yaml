@@ -9,6 +9,10 @@ vars:
   TAR_FILE: dover-{{.VERSION}}-mac.tar.gz
 
 tasks:
+  lint:
+    desc: Run linting tests.
+    cmds:
+      - golangci-lint run -v
   test:
     desc: Run go test on project.
     cmds:

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const VERSION = "0.2.0-rc.2"
+const VERSION = "0.2.1-dev.0"
 
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {
@@ -83,12 +83,6 @@ func (u *Usage) writeCommandUsage(b *strings.Builder, writer *ColorizedWriter, c
 
 func (u *Usage) buildUsage(b *strings.Builder, writer *ColorizedWriter) {
 	writer.header.Fprint(b, "Usage:\n")
-
-	cmdWidth := maxLength(u.usage.Keys())
-
-	if cmdWidth > 0 {
-		cmdWidth = cmdWidth + 1
-	}
 
 	for _, cmd := range u.usage.Keys() {
 		usageList, _ := u.usage.Get(cmd)
@@ -168,15 +162,16 @@ func (u *Usage) UsageText(colorize bool) string {
 func NewUsageBuilder() *Usage {
 
 	usageBuilder := Usage{
-		name:        "dover",
-		description: `(do version) reports and updates your version number.`,
-		usage:       orderedmap.NewOrderedMap[string, []string](),
-		options:     orderedmap.NewOrderedMap[string, string](),
+		name: "dover",
+		description: `(do version) reports and updates your version number.
+https://github.com/markgemmill/dover`,
+		usage:   orderedmap.NewOrderedMap[string, []string](),
+		options: orderedmap.NewOrderedMap[string, string](),
 	}
 	usageBuilder.addUsage("", []string{
 		"[--increment] [--format=<fmt>] [--verbose]",
 		"[--major | --minor | --patch | --build] ",
-		"[--dev | --alpha | --beta | --rc | --release]",
+		"[--pre-release | --dev | --alpha | --beta | --rc | --release]",
 	})
 	usageBuilder.addUsage("init", []string{})
 
@@ -251,7 +246,7 @@ func compileArguments(opts docopt.Opts) ExecutionArgs {
 		format:     format,
 		verbose:    verbose,
 		part:       filterFlags(opts, []string{"major", "minor", "patch", "build"}),
-		preRelease: filterFlags(opts, []string{"dev", "alpha", "beta", "rc", "release"}),
+		preRelease: filterFlags(opts, []string{"pre-release", "dev", "alpha", "beta", "rc", "release"}),
 	}
 	return args
 }

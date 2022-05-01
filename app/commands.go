@@ -101,7 +101,8 @@ func initialize(args ExecutionArgs) {
 		return
 	}
 
-	os.WriteFile(DOVER_CONFIG_FILE, []byte(DOVER_DEFAULT_CONFIG), 0666)
+	err := os.WriteFile(DOVER_CONFIG_FILE, []byte(DOVER_DEFAULT_CONFIG), 0666)
+	ExitOnError(err)
 	fmt.Println(aurora.BrightGreen("Default `.dover` configuration file created."))
 	fmt.Println("*** Be sure to add your project's versioned files! ***")
 }

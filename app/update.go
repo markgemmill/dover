@@ -17,10 +17,13 @@ func writeVersionUpdate(filePath string, lineNo int, newVersion string) {
 	rx := regexp.MustCompile(JUST_VERSION)
 
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	check(err)
+	ExitOnError(err)
 
-	file.Truncate(0)
-	file.Seek(0, 0)
+	err = file.Truncate(0)
+	ExitOnError(err)
+
+	_, err = file.Seek(0, 0)
+	ExitOnError(err)
 
 	defer file.Close()
 
@@ -32,9 +35,11 @@ func writeVersionUpdate(filePath string, lineNo int, newVersion string) {
 		}
 		if index == lineNo {
 			newLine := rx.ReplaceAllString(line, newVersion)
-			writer.WriteString(newLine + lineSeparator)
+			_, err = writer.WriteString(newLine + lineSeparator)
+			ExitOnError(err)
 		} else {
-			writer.WriteString(line + lineSeparator)
+			_, err = writer.WriteString(line + lineSeparator)
+			ExitOnError(err)
 		}
 	}
 	writer.Flush()

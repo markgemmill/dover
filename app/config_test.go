@@ -103,7 +103,8 @@ type ConfigTestSuite struct {
 
 func (suite *ConfigTestSuite) writeFile(name, content string) {
 	file := filepath.Join(suite.tempDir, name)
-	os.WriteFile(file, []byte(content), 0666)
+	err := os.WriteFile(file, []byte(content), 0666)
+	ExitOnError(err)
 }
 
 func (suite *ConfigTestSuite) SetupTest() {
@@ -111,12 +112,15 @@ func (suite *ConfigTestSuite) SetupTest() {
 	suite.tempDir, _ = ioutil.TempDir("", "gotest-*")
 	suite.writeFile("coding.go", `\nVERSION = "0.1.0-a0"\n`)
 	suite.writeFile("overhill.go", `\n__version__ = "0.1.0-a0"\n`)
-	os.Chdir(suite.tempDir)
+	err := os.Chdir(suite.tempDir)
+	ExitOnError(err)
 }
 
 func (suite *ConfigTestSuite) TeardownTest() {
-	os.Chdir(suite.homeDir)
-	os.RemoveAll(suite.tempDir)
+	err := os.Chdir(suite.homeDir)
+	ExitOnError(err)
+	err = os.RemoveAll(suite.tempDir)
+	ExitOnError(err)
 }
 
 func (suite *ConfigTestSuite) TestNoConfigFiles() {

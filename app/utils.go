@@ -37,13 +37,13 @@ func maxLength(items []string) int {
 	return maxLen
 }
 
-func keys(mapping map[string]string) []string {
-	var list = []string{}
-	for k, _ := range mapping {
-		list = append(list, k)
-	}
-	return list
-}
+//func keys(mapping map[string]string) []string {
+//	var list = []string{}
+//	for k, _ := range mapping {
+//		list = append(list, k)
+//	}
+//	return list
+//}
 
 //func Keys[K string V any](mapping map[K]V) []K {
 //	var list = []K{}

@@ -54,12 +54,6 @@ func NewVersionFinder() *VersionFinder {
 }
 
 func nextRelease(currentRelease string) string {
-	//index := -1
-	//for i, release := range RELEASE {
-	//	if release == currentRelease {
-	//		index = i
-	//	}
-	//}
 	index := IndexOf[string](&RELEASE, currentRelease)
 	index += 1
 	if index+1 > len(RELEASE) {
@@ -217,6 +211,8 @@ func (v *Version) bump(part string, preRelease string) Version {
 	}
 
 	switch preRelease {
+	case "pre-release":
+		newVers = newVers.bumpRelease()
 	case "dev":
 		newVers = newVers.setPreRelease(preRelease)
 	case "alpha":
