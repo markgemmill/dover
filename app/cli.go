@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const VERSION = "0.2.1-dev.3"
+const VERSION = "0.2.1-dev.4"
 
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {

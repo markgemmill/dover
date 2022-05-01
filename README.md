@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/markgemmill/dover)](https://goreportcard.com/report/github.com/markgemmill/dover)
 
-*version 0.2.1-dev.3*
+*version 0.2.1-dev.4*
 
 A commandline utility for incrementing your project version numbers.
 
@@ -62,7 +62,7 @@ When `dover` is run from the root directory of your project, it does the followi
     Usage:
       dover [--increment] [--format=<fmt>] [--verbose]
             [--major | --minor | --patch | --build]
-            [--dev | --alpha | --beta | --rc | --release]
+            [--pre-release | --dev | --alpha | --beta | --rc | --release]
       dover init
       dover --help
       dover --version
@@ -70,13 +70,14 @@ When `dover` is run from the root directory of your project, it does the followi
     Options:
       -i --increment     Apply the increment.
       -f --format=<fmt>  Apply format string.
-      -M --major         Update major version segment.
-      -m --minor         Update minor version segment.
-      -p --patch         Update patch version segment.
-      -d --dev           Update dev version segment.
-      -a --alpha         Update alpha pre-release segment.
-      -b --beta          Update beta pre-release segment.
-      -r --rc            Update release candidate segment.
+      -M --major         Bump major version segment.
+      -m --minor         Bump minor version segment.
+      -p --patch         Bump patch version segment.
+      -P --pre-release   Bump to next pre-release.
+      -d --dev           Set dev pre-release or bump build.
+      -a --alpha         Set alpha pre-release or bump build.
+      -b --beta          Set beta pre-release or bump build.
+      -r --rc            Set release candidate or bump build.
       -B --build         Update the pre-release build number.
       -R --release       Clear pre-release version.
       -v --verbose       Display details when incrementing.
@@ -92,16 +93,16 @@ Calling dover without any arguments returns the current version number of the pr
     ... dover
     0.1.0-alpha.0
 
-Using the format flag will format the version accordingly:
+Using the `-f --format` option will format the version output accordingly. 
 
     ... dover -f 000r0
     0.1.0a0
 
 If there are multiple versioned files and the versions are out of sync:
    
-   ... dover
-   README.md:2 0.1.0-dev.0
-   main.go  :3 0.2.0
+    ... dover
+    README.md:2 0.1.0-dev.0
+    main.go  :3 0.2.0
 
 ### Reviewing Version Increment Changes
 
