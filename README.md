@@ -1,6 +1,6 @@
 ![dover-logo](./dover-logo.svg)
 
-*version 0.2.1-dev.0*
+*version 0.2.1-dev.1*
 
 A commandline utility for incrementing your project version numbers.
 
