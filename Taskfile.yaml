@@ -61,5 +61,6 @@ tasks:
   install:
     desc: Install current mac binary to ~/.local/bin
     cmds:
+      - task: build:prod
       - rm ~/.local/bin/dover
       - cp bin/dover ~/.local/bin
