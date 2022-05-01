@@ -1,4 +1,4 @@
-module github.com/mgemmill/dover
+module github.com/markgemmill/dover
 
 go 1.18
 

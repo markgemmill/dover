@@ -1,6 +1,6 @@
 package main
 
-import "github.com/mgemmill/dover/app"
+import "github.com/markgemmill/dover/app"
 
 func main() {
 	app.Execute()
