@@ -2,16 +2,16 @@ package app
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestJSONConfigWithValues(t *testing.T) {
-	var projectFile = `{
+	projectFile := `{
 	"name": "Some Project",
 	"version": "0.0.0",
 	"dover": {
@@ -29,7 +29,7 @@ func TestJSONConfigWithValues(t *testing.T) {
 }
 
 func TestJSONConfigWithValues2(t *testing.T) {
-	var projectFile = `{
+	projectFile := `{
 	"name": "Some Project",
 	"version": "",
 	"dover": {
@@ -48,7 +48,7 @@ func TestJSONConfigWithValues2(t *testing.T) {
 }
 
 func TestJSONConfigWithOnlyVersionedFiles(t *testing.T) {
-	var projectFile = `{
+	projectFile := `{
 	"name": "Some Project",
 	"version": "0.0.0",
 	"dover": {
@@ -65,7 +65,7 @@ func TestJSONConfigWithOnlyVersionedFiles(t *testing.T) {
 }
 
 func TestJSONConfigWithNoFiles(t *testing.T) {
-	var projectFile = `{
+	projectFile := `{
 	"name": "Some Project",
 	"version": "0.0.0",
 	"dover": {
@@ -81,7 +81,7 @@ func TestJSONConfigWithNoFiles(t *testing.T) {
 }
 
 func TestJSONConfigWithNoFileVar(t *testing.T) {
-	var projectFile = `{
+	projectFile := `{
 	"name": "Some Project",
 	"version": "0.0.0",
 	"dover": {
@@ -109,7 +109,8 @@ func (suite *ConfigTestSuite) writeFile(name, content string) {
 
 func (suite *ConfigTestSuite) SetupTest() {
 	suite.homeDir, _ = os.Getwd()
-	suite.tempDir, _ = ioutil.TempDir("", "gotest-*")
+	// suite.tempDir, _ = ioutil.TempDir("", "gotest-*")
+	suite.tempDir, _ = os.MkdirTemp("", "gotest-*")
 	suite.writeFile("coding.go", `\nVERSION = "0.1.0-a0"\n`)
 	suite.writeFile("overhill.go", `\n__version__ = "0.1.0-a0"\n`)
 	err := os.Chdir(suite.tempDir)
@@ -124,10 +125,9 @@ func (suite *ConfigTestSuite) TeardownTest() {
 }
 
 func (suite *ConfigTestSuite) TestNoConfigFiles() {
-
 	_, err := configValues()
 	suite.NotNil(err)
-	suite.Equal("Unable to find dover configuration.", fmt.Sprint(err))
+	suite.Equal("unable to find dover configuration", fmt.Sprint(err))
 }
 
 func (suite *ConfigTestSuite) TestInvalidDoverConfigFile() {
@@ -135,7 +135,7 @@ func (suite *ConfigTestSuite) TestInvalidDoverConfigFile() {
 
 	_, err := configValues()
 	suite.NotNil(err)
-	suite.Equal("`.dover` config has no versioned_files.", fmt.Sprint(err))
+	suite.Equal("`.dover` config has no versioned_files", fmt.Sprint(err))
 }
 
 func (suite *ConfigTestSuite) TestConfigWithInvalidVersionedFile() {
@@ -148,7 +148,7 @@ versioned_files = [
 
 	_, err := configValues()
 	suite.NotNil(err)
-	suite.Equal("No such file: dunnowherethisis.go", fmt.Sprint(err))
+	suite.Equal("no such file: dunnowherethisis.go", fmt.Sprint(err))
 }
 
 func (suite *ConfigTestSuite) TestValidDoverConfigFile() {

@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/pelletier/go-toml"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
+
+	"github.com/pelletier/go-toml"
 )
 
 func findConfigFile(fileName string) (string, error) {
@@ -29,7 +30,7 @@ func findConfigFile(fileName string) (string, error) {
 		return entries[0], nil
 	}
 
-	return "", errors.New(fmt.Sprintf("Could not find %s config.", fileName))
+	return "", fmt.Errorf("could not find %s config", fileName)
 }
 
 type ConfigValues struct {
@@ -82,9 +83,8 @@ func readJSONConfig(configFile string) []byte {
 	check(err)
 	defer file.Close()
 
-	content, _ := ioutil.ReadAll(file)
+	content, _ := io.ReadAll(file)
 	return content
-
 }
 
 func parseJSONConfig(content string) (ConfigValues, error) {
@@ -102,13 +102,12 @@ func parseJSONConfig(content string) (ConfigValues, error) {
 
 	var payload ProjectJSON
 	err := json.Unmarshal([]byte(content), &payload)
-
 	if err != nil {
-		return cfgV, errors.New(fmt.Sprintf("Json parsing failed: %s.", err))
+		return cfgV, fmt.Errorf("json parsing failed: %s", err)
 	}
 
 	if len(payload.Dover.VersionedFiles) == 0 {
-		return cfgV, errors.New("no `dover` section or `dover.versioned_files` contains no file references.")
+		return cfgV, fmt.Errorf("no `dover` section or `dover.versioned_files` contains no file references")
 	}
 
 	cfgV.format = payload.Dover.VersionFormat
@@ -127,9 +126,11 @@ func getJSONConfigValues(configFile string) (ConfigValues, error) {
 	return cfgV, nil
 }
 
-const DOVER_CONFIG_FILE = ".dover"
-const PYPROJECT_CONFIG_FILE = "pyproject.toml"
-const PACKAGE_JSON_CONFIG_FILE = "package.json"
+const (
+	DOVER_CONFIG_FILE        = ".dover"
+	PYPROJECT_CONFIG_FILE    = "pyproject.toml"
+	PACKAGE_JSON_CONFIG_FILE = "package.json"
+)
 
 const DOVER_DEFAULT_CONFIG = `[dover]
 version_format = "000-A.0"
@@ -138,7 +139,6 @@ versioned_files = [
 `
 
 func configValues() (ConfigValues, error) {
-
 	configOrder := []string{DOVER_CONFIG_FILE, PYPROJECT_CONFIG_FILE, PACKAGE_JSON_CONFIG_FILE}
 
 	possibleConfigFiles := map[string]configParser{
@@ -153,7 +153,6 @@ func configValues() (ConfigValues, error) {
 
 		configParser := possibleConfigFiles[fileName]
 		cfgFile, err := findConfigFile(fileName)
-
 		if err != nil {
 			continue
 		}
@@ -165,13 +164,13 @@ func configValues() (ConfigValues, error) {
 		}
 
 		if len(cfg.files) == 0 {
-			return cfg, errors.New(fmt.Sprintf("`%s` config has no versioned_files.", fileName))
+			return cfg, fmt.Errorf("`%s` config has no versioned_files", fileName)
 		}
 
 		for _, filePath := range cfg.files {
 			filePath, _ := splitFileAndLineNotation(filePath)
 			if !fileExists(filePath) {
-				return cfg, errors.New(fmt.Sprintf("No such file: %s", filePath))
+				return cfg, fmt.Errorf("no such file: %s", filePath)
 			}
 		}
 
@@ -182,6 +181,5 @@ func configValues() (ConfigValues, error) {
 		return cfg, nil
 	}
 
-	return cfg, errors.New("Unable to find dover configuration.")
-
+	return cfg, fmt.Errorf("unable to find dover configuration")
 }

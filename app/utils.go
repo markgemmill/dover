@@ -2,10 +2,11 @@ package app
 
 import (
 	"fmt"
+	"os"
 	"strings"
+
+	c "github.com/fatih/color"
 )
-import "os"
-import c "github.com/fatih/color"
 
 func check(e any) {
 	if e != nil {
@@ -27,7 +28,7 @@ func setMax(currentValue int, maxValue *int) {
 }
 
 func maxLength(items []string) int {
-	var maxLen int = 0
+	maxLen := 0
 	for _, item := range items {
 		itemLen := len(item)
 		if itemLen > maxLen {
@@ -36,22 +37,6 @@ func maxLength(items []string) int {
 	}
 	return maxLen
 }
-
-//func keys(mapping map[string]string) []string {
-//	var list = []string{}
-//	for k, _ := range mapping {
-//		list = append(list, k)
-//	}
-//	return list
-//}
-
-//func Keys[K string V any](mapping map[K]V) []K {
-//	var list = []K{}
-//	for k, _ := range mapping {
-//		list = append(list, k)
-//	}
-//	return list
-//}
 
 func digitCount(number int) int {
 	if number < 10 {
@@ -70,9 +55,9 @@ func digitCount(number int) int {
 }
 
 func getMaxColumnWidths(matches *[]*VersionMatch, format string) (int, int, int) {
-	var fileWidth int = 0
-	var lineWidth int = 0
-	var versionWidth int = 0
+	fileWidth := 0
+	lineWidth := 0
+	versionWidth := 0
 	for _, m := range *matches {
 		setMax(len(m.file), &fileWidth)
 		setMax(digitCount(m.line), &lineWidth)

@@ -2,8 +2,9 @@ package app
 
 import (
 	"fmt"
-	"github.com/logrusorgru/aurora"
 	"os"
+
+	"github.com/logrusorgru/aurora"
 )
 
 func printCurrentVersions(matches *[]*VersionMatch, format string) {
@@ -28,7 +29,7 @@ func printVersionChanges(matches *[]*VersionMatch, part string, release string, 
 	fileW, lineW, versW = getMaxColumnWidths(matches, format)
 
 	_update := ""
-	if updated == true {
+	if updated {
 		_update = "updated "
 	}
 
@@ -48,12 +49,19 @@ func printVersionChanges(matches *[]*VersionMatch, part string, release string, 
 	}
 }
 
-func displayCurrentVersion(args ExecutionArgs, matches *[]*VersionMatch) {
+func displayInconsistentVersionMatch(args ExecutionArgs, matches *[]*VersionMatch) {
 	if !assertVersionMatchConsistency(matches) {
+		if args.increment {
+			fmt.Print(aurora.BrightMagenta("No files have been changed!\n"))
+		}
 		fmt.Print(aurora.BrightMagenta("\nVersions do not match across all files.\n"))
 		printCurrentVersions(matches, args.format)
 		os.Exit(1)
 	}
+}
+
+func displayCurrentVersion(args ExecutionArgs, matches *[]*VersionMatch) {
+	displayInconsistentVersionMatch(args, matches)
 
 	if args.verbose {
 		printCurrentVersions(matches, args.format)
@@ -62,23 +70,22 @@ func displayCurrentVersion(args ExecutionArgs, matches *[]*VersionMatch) {
 	fmt.Println((*matches)[0].version.format(args.format))
 }
 
+func displayFutureVersion(args ExecutionArgs, matches *[]*VersionMatch) {
+	displayInconsistentVersionMatch(args, matches)
+
+	newVers := (*matches)[0].version.bump(args.part, args.preRelease)
+	version := newVers.format(args.format)
+	fmt.Println(version)
+}
+
 func displayNextVersion(args ExecutionArgs, matches *[]*VersionMatch) {
-	if !assertVersionMatchConsistency(matches) {
-		fmt.Print(aurora.BrightMagenta("Versions do not match across all files.\n"))
-		printCurrentVersions(matches, args.format)
-		os.Exit(1)
-	}
+	displayInconsistentVersionMatch(args, matches)
 
 	printVersionChanges(matches, args.part, args.preRelease, args.format, false)
 }
 
 func applyNextVersion(args ExecutionArgs, matches *[]*VersionMatch) {
-	if !assertVersionMatchConsistency(matches) {
-		fmt.Print(aurora.BrightMagenta("No files have been changed!\n"))
-		fmt.Print(aurora.BrightMagenta("Versions do not match across all files.\n"))
-		printCurrentVersions(matches, args.format)
-		os.Exit(1)
-	}
+	displayInconsistentVersionMatch(args, matches)
 
 	var newVers Version
 
@@ -95,7 +102,7 @@ func applyNextVersion(args ExecutionArgs, matches *[]*VersionMatch) {
 	}
 }
 
-func initialize(args ExecutionArgs) {
+func initialize() {
 	if fileExists(DOVER_CONFIG_FILE) {
 		fmt.Println(aurora.BrightMagenta("Dover configuration file `.dover` already exists!"))
 		return

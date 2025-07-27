@@ -8,14 +8,18 @@ import (
 )
 
 // TODO: combines these strings
-const JUST_VERSION = `(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?`
-const VERSION_REGEX = `(version|VERSION|Version)[^ :=]* ?[:=]? ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
+const (
+	JUST_VERSION  = `(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?`
+	VERSION_REGEX = `(version|VERSION|Version)[^ :=]* ?[:=]? ? ["']?(?P<major>\d+)(\.(?P<minor>\d+))(\.(?P<patch>\d+))?([\.\-\+](?P<release>[a-z]+)([\.-]?(?P<build>\d+))?)?["']?`
+)
 
-var RELEASE = []string{"dev", "alpha", "beta", "rc"}
-var RELEASES = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
-var SHORT = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "d", "a": "a", "b": "b"}
-var LONG = map[string]string{"dev": "dev", "alpha": "alpha", "beta": "beta", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
-var PARTS = [6]string{"major", "minor", "patch", "release", "prod", "build"}
+var (
+	RELEASE  = []string{"dev", "alpha", "beta", "rc"}
+	RELEASES = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
+	SHORT    = map[string]string{"dev": "d", "alpha": "a", "beta": "b", "rc": "rc", "d": "d", "a": "a", "b": "b"}
+	LONG     = map[string]string{"dev": "dev", "alpha": "alpha", "beta": "beta", "rc": "rc", "d": "dev", "a": "alpha", "b": "beta"}
+	PARTS    = [6]string{"major", "minor", "patch", "release", "prod", "build"}
+)
 
 type VersionFinder struct {
 	rx regexp.Regexp
@@ -54,7 +58,7 @@ func NewVersionFinder() *VersionFinder {
 }
 
 func nextRelease(currentRelease string) string {
-	index := IndexOf[string](&RELEASE, currentRelease)
+	index := IndexOf(&RELEASE, currentRelease)
 	index += 1
 	if index+1 > len(RELEASE) {
 		return ""
@@ -63,8 +67,8 @@ func nextRelease(currentRelease string) string {
 }
 
 func validateReleaseOrder(currentRelease string, requestedRelease string) error {
-	currentIndex := IndexOf[string](&RELEASE, currentRelease)
-	requestedIndex := IndexOf[string](&RELEASE, requestedRelease)
+	currentIndex := IndexOf(&RELEASE, currentRelease)
+	requestedIndex := IndexOf(&RELEASE, requestedRelease)
 	if requestedIndex < currentIndex {
 		msg := fmt.Sprintf("Invalid release order requested. `%s` comes before the current release `%s`.", requestedRelease, currentRelease)
 		return errors.New(msg)
@@ -113,7 +117,6 @@ func (v *Version) bumpMajor() Version {
 		build:   "0",
 	}
 	return nv
-
 }
 
 func (v *Version) bumpMinor() Version {
@@ -169,7 +172,6 @@ func (v *Version) bumpRelease() Version {
 		build:   "0",
 	}
 	return nv
-
 }
 
 func (v *Version) bumpReleaseToProd() Version {

@@ -2,14 +2,15 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/elliotchance/orderedmap/v2"
 	c "github.com/fatih/color"
 	"github.com/marco-m/docopt-go"
-	"os"
-	"strings"
 )
 
-const VERSION = "0.2.1-dev.4"
+const VERSION = "0.3.0"
 
 func selectFormat(args ExecutionArgs, cfg ConfigValues) string {
 	if args.format != "" {
@@ -40,6 +41,7 @@ func filterFlags(args map[string]any, flags []string) string {
 
 type ExecutionArgs struct {
 	initialize bool
+	echo       bool
 	increment  bool
 	format     string
 	verbose    bool
@@ -105,7 +107,6 @@ func (u *Usage) buildUsage(b *strings.Builder, writer *ColorizedWriter) {
 }
 
 func (u *Usage) buildOptions(b *strings.Builder, writer *ColorizedWriter) {
-
 	// OPTIONS
 	fmt.Fprint(b, "\n")
 	writer.header.Fprint(b, "Options:\n")
@@ -160,7 +161,6 @@ func (u *Usage) UsageText(colorize bool) string {
 }
 
 func NewUsageBuilder() *Usage {
-
 	usageBuilder := Usage{
 		name: "dover",
 		description: `(do version) reports and updates your version number.
@@ -169,13 +169,14 @@ https://github.com/markgemmill/dover`,
 		options: orderedmap.NewOrderedMap[string, string](),
 	}
 	usageBuilder.addUsage("", []string{
-		"[--increment] [--format=<fmt>] [--verbose]",
+		"[--increment | --echo] [--format=<fmt>] [--verbose]",
 		"[--major | --minor | --patch | --build] ",
 		"[--pre-release | --dev | --alpha | --beta | --rc | --release]",
 	})
 	usageBuilder.addUsage("init", []string{})
 
 	usageBuilder.addOption("-i --increment", "Apply the increment.")
+	usageBuilder.addOption("-e --echo", "Display future version.")
 	usageBuilder.addOption("-f --format=<fmt>", "Apply format string: 000[-.+][(aA)[-.]0]")
 	usageBuilder.addOption("-M --major", "Update major version segment.")
 	usageBuilder.addOption("-m --minor", "Update minor version segment.")
@@ -195,10 +196,10 @@ https://github.com/markgemmill/dover`,
 }
 
 func ParseCommandline() docopt.Opts {
-	var version = fmt.Sprintf("dover v%s", VERSION)
+	version := fmt.Sprintf("dover v%s", VERSION)
 	usage := NewUsageBuilder()
 
-	var PrintHelpAndExit = func(err error, output string) {
+	PrintHelpAndExit := func(err error, output string) {
 		/// output could be --version or --help
 
 		outputUsage := strings.Contains(output, "Usage:")
@@ -223,7 +224,7 @@ func ParseCommandline() docopt.Opts {
 		}
 	}
 
-	var CLIParser = &docopt.Parser{
+	CLIParser := &docopt.Parser{
 		HelpHandler:   PrintHelpAndExit,
 		OptionsFirst:  false,
 		SkipHelpFlags: false,
@@ -231,18 +232,19 @@ func ParseCommandline() docopt.Opts {
 
 	arguments, _ := CLIParser.ParseArgs(usage.HelpText(false), nil, version)
 	return arguments
-
 }
 
 func compileArguments(opts docopt.Opts) ExecutionArgs {
 	initialize, _ := opts.Bool("init")
 	increment, _ := opts.Bool("--increment")
+	echo, _ := opts.Bool("--echo")
 	format, _ := opts.String("--format")
 	verbose, _ := opts.Bool("--verbose")
 
 	args := ExecutionArgs{
 		initialize: initialize,
 		increment:  increment,
+		echo:       echo,
 		format:     format,
 		verbose:    verbose,
 		part:       filterFlags(opts, []string{"major", "minor", "patch", "build"}),
@@ -262,8 +264,13 @@ func Execute() {
 	args.format = selectFormat(args, cfg)
 	allMatches := getAllVersionStringMatches(cfg.files)
 
-	if args.initialize == true {
-		initialize(args)
+	if args.initialize {
+		initialize()
+		return
+	}
+
+	if args.echo {
+		displayFutureVersion(args, allMatches)
 		return
 	}
 
@@ -281,5 +288,4 @@ func Execute() {
 		applyNextVersion(args, allMatches)
 		return
 	}
-
 }
